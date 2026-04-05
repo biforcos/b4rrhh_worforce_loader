@@ -25,6 +25,10 @@ public class LoaderProperties {
 
     @Valid
     @NotNull
+    private Generation generation = new Generation();
+
+    @Valid
+    @NotNull
     private Defaults defaults = new Defaults();
 
     @Valid
@@ -45,6 +49,14 @@ public class LoaderProperties {
 
     public void setRun(Run run) {
         this.run = run;
+    }
+
+    public Generation getGeneration() {
+        return generation;
+    }
+
+    public void setGeneration(Generation generation) {
+        this.generation = generation;
     }
 
     public Defaults getDefaults() {
@@ -69,7 +81,7 @@ public class LoaderProperties {
         private String baseUrl;
 
         @NotBlank
-        private String hirePath;
+        private String hirePath = "/employees/hire";
 
         public String getBaseUrl() {
             return baseUrl;
@@ -91,14 +103,9 @@ public class LoaderProperties {
     public static class Run {
 
         @NotNull
-        private RunMode mode;
+        private RunMode mode = RunMode.HIRE;
 
-        @Min(1)
-        private int count;
-
-        private long seed;
-
-        private boolean dryRun;
+        private boolean dryRun = false;
 
         public RunMode getMode() {
             return mode;
@@ -107,6 +114,34 @@ public class LoaderProperties {
         public void setMode(RunMode mode) {
             this.mode = mode;
         }
+
+        public boolean isDryRun() {
+            return dryRun;
+        }
+
+        public void setDryRun(boolean dryRun) {
+            this.dryRun = dryRun;
+        }
+    }
+
+    public static class Generation {
+
+        @Min(1)
+        private int count = 10;
+
+        private long seed = 12345L;
+
+        @NotBlank
+        private String employeeNumberPrefix = "MAS";
+
+        @Min(1)
+        private int employeeNumberPadding = 6;
+
+        @NotNull
+        private LocalDate hireDateFrom = LocalDate.now().minusMonths(3);
+
+        @NotNull
+        private LocalDate hireDateTo = LocalDate.now();
 
         public int getCount() {
             return count;
@@ -122,72 +157,6 @@ public class LoaderProperties {
 
         public void setSeed(long seed) {
             this.seed = seed;
-        }
-
-        public boolean isDryRun() {
-            return dryRun;
-        }
-
-        public void setDryRun(boolean dryRun) {
-            this.dryRun = dryRun;
-        }
-    }
-
-    public static class Defaults {
-
-        @NotBlank
-        private String ruleSystemCode;
-
-        @NotBlank
-        private String employeeTypeCode;
-
-        @NotBlank
-        private String employeeNumberPrefix;
-
-        @Min(1)
-        private int employeeNumberPadding;
-
-        @NotNull
-        private LocalDate hireDateFrom;
-
-        @NotNull
-        private LocalDate hireDateTo;
-
-        @NotBlank
-        private String entryReasonCode;
-
-        @NotBlank
-        private String companyCode;
-
-        @NotBlank
-        private String workCenterCode;
-
-        @NotBlank
-        private String contractTypeCode;
-
-        @NotBlank
-        private String contractSubtypeCode;
-
-        @NotBlank
-        private String agreementCode;
-
-        @NotBlank
-        private String agreementCategoryCode;
-
-        public String getRuleSystemCode() {
-            return ruleSystemCode;
-        }
-
-        public void setRuleSystemCode(String ruleSystemCode) {
-            this.ruleSystemCode = ruleSystemCode;
-        }
-
-        public String getEmployeeTypeCode() {
-            return employeeTypeCode;
-        }
-
-        public void setEmployeeTypeCode(String employeeTypeCode) {
-            this.employeeTypeCode = employeeTypeCode;
         }
 
         public String getEmployeeNumberPrefix() {
@@ -221,61 +190,30 @@ public class LoaderProperties {
         public void setHireDateTo(LocalDate hireDateTo) {
             this.hireDateTo = hireDateTo;
         }
+    }
 
-        public String getEntryReasonCode() {
-            return entryReasonCode;
+    public static class Defaults {
+
+        @NotBlank
+        private String ruleSystemCode;
+
+        @NotBlank
+        private String employeeTypeCode;
+
+        public String getRuleSystemCode() {
+            return ruleSystemCode;
         }
 
-        public void setEntryReasonCode(String entryReasonCode) {
-            this.entryReasonCode = entryReasonCode;
+        public void setRuleSystemCode(String ruleSystemCode) {
+            this.ruleSystemCode = ruleSystemCode;
         }
 
-        public String getCompanyCode() {
-            return companyCode;
+        public String getEmployeeTypeCode() {
+            return employeeTypeCode;
         }
 
-        public void setCompanyCode(String companyCode) {
-            this.companyCode = companyCode;
-        }
-
-        public String getWorkCenterCode() {
-            return workCenterCode;
-        }
-
-        public void setWorkCenterCode(String workCenterCode) {
-            this.workCenterCode = workCenterCode;
-        }
-
-        public String getContractTypeCode() {
-            return contractTypeCode;
-        }
-
-        public void setContractTypeCode(String contractTypeCode) {
-            this.contractTypeCode = contractTypeCode;
-        }
-
-        public String getContractSubtypeCode() {
-            return contractSubtypeCode;
-        }
-
-        public void setContractSubtypeCode(String contractSubtypeCode) {
-            this.contractSubtypeCode = contractSubtypeCode;
-        }
-
-        public String getAgreementCode() {
-            return agreementCode;
-        }
-
-        public void setAgreementCode(String agreementCode) {
-            this.agreementCode = agreementCode;
-        }
-
-        public String getAgreementCategoryCode() {
-            return agreementCategoryCode;
-        }
-
-        public void setAgreementCategoryCode(String agreementCategoryCode) {
-            this.agreementCategoryCode = agreementCategoryCode;
+        public void setEmployeeTypeCode(String employeeTypeCode) {
+            this.employeeTypeCode = employeeTypeCode;
         }
     }
 

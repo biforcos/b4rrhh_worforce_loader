@@ -37,10 +37,9 @@ public class CliRunner implements CommandLineRunner {
         }
 
         log.info(
-                "Starting mass hire run: count={}, dryRun={}, seed={}",
-                properties.getRun().getCount(),
-                properties.getRun().isDryRun(),
-                properties.getRun().getSeed()
+            "Starting mass hire run: count={}, dryRun={}",
+            properties.getGeneration().getCount(),
+            properties.getRun().isDryRun()
         );
 
         LoaderRunSummary summary = runMassHireUseCase.run();

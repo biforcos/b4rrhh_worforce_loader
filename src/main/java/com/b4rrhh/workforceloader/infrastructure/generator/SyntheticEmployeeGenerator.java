@@ -28,17 +28,17 @@ public class SyntheticEmployeeGenerator {
 
     public List<SyntheticEmployee> generateEmployees() {
         LoaderProperties.Defaults defaults = properties.getDefaults();
-        LoaderProperties.Run run = properties.getRun();
+        LoaderProperties.Generation generation = properties.getGeneration();
 
-        Random random = new Random(run.getSeed());
-        List<SyntheticEmployee> employees = new ArrayList<>(run.getCount());
+        Random random = new Random(generation.getSeed());
+        List<SyntheticEmployee> employees = new ArrayList<>(generation.getCount());
 
-        for (int i = 1; i <= run.getCount(); i++) {
+        for (int i = 1; i <= generation.getCount(); i++) {
             String firstName = pick(FIRST_NAMES, random);
             String lastName1 = pick(LAST_NAMES, random);
             String lastName2 = random.nextBoolean() ? pick(LAST_NAMES, random) : null;
-            String employeeNumber = buildEmployeeNumber(defaults, i);
-            LocalDate hireDate = randomDateBetween(defaults.getHireDateFrom(), defaults.getHireDateTo(), random);
+            String employeeNumber = buildEmployeeNumber(generation, i);
+            LocalDate hireDate = randomDateBetween(generation.getHireDateFrom(), generation.getHireDateTo(), random);
 
             employees.add(new SyntheticEmployee(
                     normalizeCode(defaults.getRuleSystemCode()),
@@ -59,9 +59,9 @@ public class SyntheticEmployeeGenerator {
         return source.get(random.nextInt(source.size()));
     }
 
-    private static String buildEmployeeNumber(LoaderProperties.Defaults defaults, int sequence) {
-        String format = "%s%0" + defaults.getEmployeeNumberPadding() + "d";
-        return String.format(format, normalizeCode(defaults.getEmployeeNumberPrefix()), sequence);
+    private static String buildEmployeeNumber(LoaderProperties.Generation generation, int sequence) {
+        String format = "%s%0" + generation.getEmployeeNumberPadding() + "d";
+        return String.format(format, normalizeCode(generation.getEmployeeNumberPrefix()), sequence);
     }
 
     private static LocalDate randomDateBetween(LocalDate from, LocalDate to, Random random) {

@@ -7,29 +7,10 @@ loader:
     base-url: http://localhost:8080
     hire-path: /employees/hire
 
-  run:
-    mode: hire
-    count: 100
-    seed: 12345
-    dry-run: false
-
   defaults:
     rule-system-code: ESP
     employee-type-code: EMP
-    employee-number-prefix: MAS
-    employee-number-padding: 6
-    hire-date-from: 2026-01-01
-    hire-date-to: 2026-03-31
-    entry-reason-code: HIRING
-    company-code: ES01
-    work-center-code: REMOTE
-    contract-type-code: IND
-    contract-subtype-code: FT1
-    agreement-code: AGR_TECH
-    agreement-category-code: CAT_TECH_2
 
-  cost-center:
-    enabled: false
-    items:
-      - cost-center-code: CC_SALES
-        allocation-percentage: 100
+  generation:
+    count: 10
+    seed: 12345

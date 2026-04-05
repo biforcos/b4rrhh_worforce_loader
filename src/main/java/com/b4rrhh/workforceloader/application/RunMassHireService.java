@@ -19,15 +19,18 @@ public class RunMassHireService implements RunMassHireUseCase {
     private final LoaderProperties properties;
     private final SyntheticEmployeeGenerator syntheticEmployeeGenerator;
     private final B4rrhhLifecycleClient b4rrhhLifecycleClient;
+    private final HireReferenceDataResolver hireReferenceDataResolver;
 
     public RunMassHireService(
             LoaderProperties properties,
             SyntheticEmployeeGenerator syntheticEmployeeGenerator,
-            B4rrhhLifecycleClient b4rrhhLifecycleClient
+            B4rrhhLifecycleClient b4rrhhLifecycleClient,
+            HireReferenceDataResolver hireReferenceDataResolver
     ) {
         this.properties = properties;
         this.syntheticEmployeeGenerator = syntheticEmployeeGenerator;
         this.b4rrhhLifecycleClient = b4rrhhLifecycleClient;
+        this.hireReferenceDataResolver = hireReferenceDataResolver;
     }
 
     @Override
@@ -35,13 +38,16 @@ public class RunMassHireService implements RunMassHireUseCase {
         validateConfiguration();
 
         List<SyntheticEmployee> employees = syntheticEmployeeGenerator.generateEmployees();
+        String ruleSystemCode = normalizeCode(properties.getDefaults().getRuleSystemCode());
+        // Current behavior resolves one reference set per run; future evolution may resolve per employee.
+        ResolvedHireData resolvedHireData = hireReferenceDataResolver.resolve(ruleSystemCode);
         List<HireExecutionResult> results = new ArrayList<>(employees.size());
 
         int totalSuccess = 0;
         int totalFailed = 0;
 
         for (SyntheticEmployee employee : employees) {
-            HireEmployeeRequest request = toRequest(employee);
+            HireEmployeeRequest request = toRequest(employee, resolvedHireData);
 
             if (properties.getRun().isDryRun()) {
                 results.add(new HireExecutionResult(
@@ -73,9 +79,7 @@ public class RunMassHireService implements RunMassHireUseCase {
         return new LoaderRunSummary(employees.size(), totalSuccess, totalFailed, results);
     }
 
-    private HireEmployeeRequest toRequest(SyntheticEmployee employee) {
-        LoaderProperties.Defaults defaults = properties.getDefaults();
-
+    private HireEmployeeRequest toRequest(SyntheticEmployee employee, ResolvedHireData resolvedHireData) {
         HireEmployeeRequest.CostCenterDistribution distribution = null;
         if (properties.getCostCenter().isEnabled()) {
             List<HireEmployeeRequest.CostCenterDistribution.Item> items = properties.getCostCenter().getItems().stream()
@@ -96,25 +100,25 @@ public class RunMassHireService implements RunMassHireUseCase {
                 employee.lastName2(),
                 employee.preferredName(),
                 employee.hireDate(),
-                normalizeCode(defaults.getEntryReasonCode()),
-                normalizeCode(defaults.getCompanyCode()),
-                normalizeCode(defaults.getWorkCenterCode()),
+                normalizeCode(resolvedHireData.entryReasonCode()),
+                normalizeCode(resolvedHireData.companyCode()),
+                normalizeCode(resolvedHireData.workCenterCode()),
                 new HireEmployeeRequest.Contract(
-                        normalizeCode(defaults.getContractTypeCode()),
-                        normalizeCode(defaults.getContractSubtypeCode())
+                        normalizeCode(resolvedHireData.contractTypeCode()),
+                        normalizeCode(resolvedHireData.contractSubtypeCode())
                 ),
                 new HireEmployeeRequest.LaborClassification(
-                        normalizeCode(defaults.getAgreementCode()),
-                        normalizeCode(defaults.getAgreementCategoryCode())
+                        normalizeCode(resolvedHireData.agreementCode()),
+                        normalizeCode(resolvedHireData.agreementCategoryCode())
                 ),
                 distribution
         );
     }
 
     private void validateConfiguration() {
-        LoaderProperties.Defaults defaults = properties.getDefaults();
-        if (defaults.getHireDateFrom().isAfter(defaults.getHireDateTo())) {
-            throw new IllegalArgumentException("Invalid date range: loader.defaults.hire-date-from must be <= hire-date-to");
+        LoaderProperties.Generation generation = properties.getGeneration();
+        if (generation.getHireDateFrom().isAfter(generation.getHireDateTo())) {
+            throw new IllegalArgumentException("Invalid date range: loader.generation.hire-date-from must be <= hire-date-to");
         }
 
         LoaderProperties.CostCenter costCenter = properties.getCostCenter();
@@ -124,7 +128,6 @@ public class RunMassHireService implements RunMassHireUseCase {
             }
             int allocationSum = costCenter.getItems().stream()
                     .map(LoaderProperties.CostCenter.Item::getAllocationPercentage)
-                    .filter(value -> value != null)
                     .mapToInt(Integer::intValue)
                     .sum();
             if (allocationSum > 100) {
