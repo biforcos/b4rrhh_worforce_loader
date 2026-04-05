@@ -59,7 +59,7 @@ public class CatalogApiClient {
                 .bodyToMono(new ParameterizedTypeReference<List<RawCatalogItem>>() { })
                 .block();
 
-                return mapDependentOptions(response, "CONTRACT_SUBTYPE");
+        return mapDependentOptions(response, "CONTRACT_SUBTYPE");
     }
 
     private List<CatalogOption> mapDirectOptions(List<RawCatalogItem> rawItems, String entityTypeCode) {
@@ -71,20 +71,20 @@ public class CatalogApiClient {
                 .map(option -> new CatalogOption(normalize(option.code()), option.name().trim()))
                 .toList();
 
-                if (options.isEmpty()) {
-                        throw new IllegalStateException("No catalog options found for " + entityTypeCode);
-                }
-
-                return options;
+        if (options.isEmpty()) {
+            throw new IllegalStateException("No catalog options found for " + entityTypeCode);
         }
 
-        private List<CatalogOption> mapDependentOptions(List<RawCatalogItem> rawItems, String entityTypeCode) {
-                List<CatalogOption> options = (rawItems == null ? List.<RawCatalogItem>of() : rawItems).stream()
-                                .filter(option -> option != null
-                                                && option.code() != null
-                                                && option.name() != null)
-                                .map(option -> new CatalogOption(normalize(option.code()), option.name().trim()))
-                                .toList();
+        return options;
+    }
+
+    private List<CatalogOption> mapDependentOptions(List<RawCatalogItem> rawItems, String entityTypeCode) {
+        List<CatalogOption> options = (rawItems == null ? List.<RawCatalogItem>of() : rawItems).stream()
+                .filter(option -> option != null
+                        && option.code() != null
+                        && option.name() != null)
+                .map(option -> new CatalogOption(normalize(option.code()), option.name().trim()))
+                .toList();
 
         if (options.isEmpty()) {
             throw new IllegalStateException("No catalog options found for " + entityTypeCode);

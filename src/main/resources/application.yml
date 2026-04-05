@@ -7,6 +7,10 @@ loader:
     base-url: http://localhost:8080
     hire-path: /employees/hire
 
+  run:
+    mode: LIFECYCLE
+    dry-run: true
+
   defaults:
     rule-system-code: ESP
     employee-type-code: EMP
@@ -14,3 +18,19 @@ loader:
   generation:
     count: 10
     seed: 12345
+    employee-number-prefix: MAS
+    employee-number-padding: 6
+    hire-date-from: 2024-01-01
+    hire-date-to: 2024-12-31
+
+  simulation:
+    terminate-rate: 0.30
+    rehire-rate-of-terminated: 0.40
+    termination-min-days-after-hire: 30
+    termination-max-days-after-hire: 180
+    rehire-min-days-after-termination: 15
+    rehire-max-days-after-termination: 120
+
+  cost-center:
+    enabled: false
+    items: []

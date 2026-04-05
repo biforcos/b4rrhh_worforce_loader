@@ -1,6 +1,6 @@
 package com.b4rrhh.workforceloader.infrastructure.runner;
 
-import com.b4rrhh.workforceloader.application.RunMassHireUseCase;
+import com.b4rrhh.workforceloader.application.RunLifecycleSimulationUseCase;
 import com.b4rrhh.workforceloader.domain.model.LoaderRunSummary;
 import com.b4rrhh.workforceloader.infrastructure.config.LoaderProperties;
 import com.b4rrhh.workforceloader.infrastructure.config.RunMode;
@@ -16,33 +16,33 @@ public class CliRunner implements CommandLineRunner {
     private static final Logger log = LoggerFactory.getLogger(CliRunner.class);
 
     private final LoaderProperties properties;
-    private final RunMassHireUseCase runMassHireUseCase;
+    private final RunLifecycleSimulationUseCase runLifecycleSimulationUseCase;
     private final RunReportWriter runReportWriter;
 
     public CliRunner(
             LoaderProperties properties,
-            RunMassHireUseCase runMassHireUseCase,
+            RunLifecycleSimulationUseCase runLifecycleSimulationUseCase,
             RunReportWriter runReportWriter
     ) {
         this.properties = properties;
-        this.runMassHireUseCase = runMassHireUseCase;
+        this.runLifecycleSimulationUseCase = runLifecycleSimulationUseCase;
         this.runReportWriter = runReportWriter;
     }
 
     @Override
     public void run(String... args) {
-        if (properties.getRun().getMode() != RunMode.HIRE) {
+        if (properties.getRun().getMode() != RunMode.LIFECYCLE) {
             log.info("Run mode '{}' is not supported in V1. Nothing to execute.", properties.getRun().getMode());
             return;
         }
 
         log.info(
-            "Starting mass hire run: count={}, dryRun={}",
+            "Starting lifecycle simulation run: employees={}, dryRun={}",
             properties.getGeneration().getCount(),
             properties.getRun().isDryRun()
         );
 
-        LoaderRunSummary summary = runMassHireUseCase.run();
+        LoaderRunSummary summary = runLifecycleSimulationUseCase.run();
         runReportWriter.printSummary(summary, properties.getRun().isDryRun());
     }
 }

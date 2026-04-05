@@ -2,6 +2,10 @@ package com.b4rrhh.workforceloader.infrastructure.api;
 
 import com.b4rrhh.workforceloader.infrastructure.api.dto.HireEmployeeRequest;
 import com.b4rrhh.workforceloader.infrastructure.api.dto.HireEmployeeResponse;
+import com.b4rrhh.workforceloader.infrastructure.api.dto.RehireEmployeeRequest;
+import com.b4rrhh.workforceloader.infrastructure.api.dto.RehireEmployeeResponse;
+import com.b4rrhh.workforceloader.infrastructure.api.dto.TerminateEmployeeRequest;
+import com.b4rrhh.workforceloader.infrastructure.api.dto.TerminateEmployeeResponse;
 import com.b4rrhh.workforceloader.infrastructure.config.LoaderProperties;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -41,6 +45,70 @@ public class B4rrhhLifecycleClient {
             );
         } catch (Exception ex) {
             throw new RuntimeException("Connection/runtime error during backend hire call: " + ex.getMessage(), ex);
+        }
+    }
+
+    public TerminateEmployeeResponse terminate(
+            String ruleSystemCode,
+            String employeeTypeCode,
+            String employeeNumber,
+            TerminateEmployeeRequest request
+    ) {
+        try {
+            TerminateEmployeeResponse response = webClient.post()
+                    .uri("/employees/{ruleSystemCode}/{employeeTypeCode}/{employeeNumber}/terminate",
+                            ruleSystemCode,
+                            employeeTypeCode,
+                            employeeNumber)
+                    .bodyValue(request)
+                    .retrieve()
+                    .bodyToMono(TerminateEmployeeResponse.class)
+                    .block();
+
+            if (response == null) {
+                throw new RuntimeException("Backend terminate call returned empty response body");
+            }
+
+            return response;
+        } catch (WebClientResponseException ex) {
+            throw new RuntimeException(
+                    "HTTP error during backend terminate call: status=" + ex.getStatusCode() + ", body=" + ex.getResponseBodyAsString(),
+                    ex
+            );
+        } catch (Exception ex) {
+            throw new RuntimeException("Connection/runtime error during backend terminate call: " + ex.getMessage(), ex);
+        }
+    }
+
+    public RehireEmployeeResponse rehire(
+            String ruleSystemCode,
+            String employeeTypeCode,
+            String employeeNumber,
+            RehireEmployeeRequest request
+    ) {
+        try {
+            RehireEmployeeResponse response = webClient.post()
+                    .uri("/employees/{ruleSystemCode}/{employeeTypeCode}/{employeeNumber}/rehire",
+                            ruleSystemCode,
+                            employeeTypeCode,
+                            employeeNumber)
+                    .bodyValue(request)
+                    .retrieve()
+                    .bodyToMono(RehireEmployeeResponse.class)
+                    .block();
+
+            if (response == null) {
+                throw new RuntimeException("Backend rehire call returned empty response body");
+            }
+
+            return response;
+        } catch (WebClientResponseException ex) {
+            throw new RuntimeException(
+                    "HTTP error during backend rehire call: status=" + ex.getStatusCode() + ", body=" + ex.getResponseBodyAsString(),
+                    ex
+            );
+        } catch (Exception ex) {
+            throw new RuntimeException("Connection/runtime error during backend rehire call: " + ex.getMessage(), ex);
         }
     }
 }

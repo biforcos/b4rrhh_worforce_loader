@@ -1,6 +1,8 @@
 package com.b4rrhh.workforceloader.infrastructure.config;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -34,6 +36,10 @@ public class LoaderProperties {
     @Valid
     @NotNull
     private CostCenter costCenter = new CostCenter();
+
+    @Valid
+    @NotNull
+    private Simulation simulation = new Simulation();
 
     public Backend getBackend() {
         return backend;
@@ -75,6 +81,14 @@ public class LoaderProperties {
         this.costCenter = costCenter;
     }
 
+    public Simulation getSimulation() {
+        return simulation;
+    }
+
+    public void setSimulation(Simulation simulation) {
+        this.simulation = simulation;
+    }
+
     public static class Backend {
 
         @NotBlank
@@ -103,7 +117,7 @@ public class LoaderProperties {
     public static class Run {
 
         @NotNull
-        private RunMode mode = RunMode.HIRE;
+        private RunMode mode = RunMode.LIFECYCLE;
 
         private boolean dryRun = false;
 
@@ -264,6 +278,77 @@ public class LoaderProperties {
             public void setAllocationPercentage(Integer allocationPercentage) {
                 this.allocationPercentage = allocationPercentage;
             }
+        }
+    }
+
+    public static class Simulation {
+
+        @DecimalMin("0.0")
+        @DecimalMax("1.0")
+        private double terminateRate = 0.30;
+
+        @DecimalMin("0.0")
+        @DecimalMax("1.0")
+        private double rehireRateOfTerminated = 0.40;
+
+        @Min(1)
+        private int terminationMinDaysAfterHire = 30;
+
+        @Min(1)
+        private int terminationMaxDaysAfterHire = 180;
+
+        @Min(1)
+        private int rehireMinDaysAfterTermination = 15;
+
+        @Min(1)
+        private int rehireMaxDaysAfterTermination = 120;
+
+        public double getTerminateRate() {
+            return terminateRate;
+        }
+
+        public void setTerminateRate(double terminateRate) {
+            this.terminateRate = terminateRate;
+        }
+
+        public double getRehireRateOfTerminated() {
+            return rehireRateOfTerminated;
+        }
+
+        public void setRehireRateOfTerminated(double rehireRateOfTerminated) {
+            this.rehireRateOfTerminated = rehireRateOfTerminated;
+        }
+
+        public int getTerminationMinDaysAfterHire() {
+            return terminationMinDaysAfterHire;
+        }
+
+        public void setTerminationMinDaysAfterHire(int terminationMinDaysAfterHire) {
+            this.terminationMinDaysAfterHire = terminationMinDaysAfterHire;
+        }
+
+        public int getTerminationMaxDaysAfterHire() {
+            return terminationMaxDaysAfterHire;
+        }
+
+        public void setTerminationMaxDaysAfterHire(int terminationMaxDaysAfterHire) {
+            this.terminationMaxDaysAfterHire = terminationMaxDaysAfterHire;
+        }
+
+        public int getRehireMinDaysAfterTermination() {
+            return rehireMinDaysAfterTermination;
+        }
+
+        public void setRehireMinDaysAfterTermination(int rehireMinDaysAfterTermination) {
+            this.rehireMinDaysAfterTermination = rehireMinDaysAfterTermination;
+        }
+
+        public int getRehireMaxDaysAfterTermination() {
+            return rehireMaxDaysAfterTermination;
+        }
+
+        public void setRehireMaxDaysAfterTermination(int rehireMaxDaysAfterTermination) {
+            this.rehireMaxDaysAfterTermination = rehireMaxDaysAfterTermination;
         }
     }
 }
