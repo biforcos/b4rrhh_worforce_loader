@@ -4,7 +4,6 @@ import com.b4rrhh.workforceloader.domain.model.LifecycleEventExecutionResult;
 import com.b4rrhh.workforceloader.domain.model.LoaderRunSummary;
 import com.b4rrhh.workforceloader.domain.model.SyntheticEmployee;
 import com.b4rrhh.workforceloader.infrastructure.api.B4rrhhLifecycleClient;
-import com.b4rrhh.workforceloader.infrastructure.api.dto.CreateWorkCenterRequest;
 import com.b4rrhh.workforceloader.infrastructure.api.dto.HireEmployeeRequest;
 import com.b4rrhh.workforceloader.infrastructure.api.dto.HireEmployeeResponse;
 import com.b4rrhh.workforceloader.infrastructure.api.dto.RehireEmployeeRequest;
@@ -12,6 +11,7 @@ import com.b4rrhh.workforceloader.infrastructure.api.dto.RehireEmployeeResponse;
 import com.b4rrhh.workforceloader.infrastructure.api.dto.ReplaceContractFromDateRequest;
 import com.b4rrhh.workforceloader.infrastructure.api.dto.ReplaceCostCenterDistributionFromDateRequest;
 import com.b4rrhh.workforceloader.infrastructure.api.dto.ReplaceLaborClassificationFromDateRequest;
+import com.b4rrhh.workforceloader.infrastructure.api.dto.ReplaceWorkCenterFromDateRequest;
 import com.b4rrhh.workforceloader.infrastructure.api.dto.TerminateEmployeeRequest;
 import com.b4rrhh.workforceloader.infrastructure.api.dto.TerminateEmployeeResponse;
 import com.b4rrhh.workforceloader.infrastructure.config.LoaderProperties;
@@ -272,14 +272,13 @@ public class RunLifecycleSimulationService implements RunLifecycleSimulationUseC
         );
     }
 
-    private CreateWorkCenterRequest toCreateWorkCenterRequest(
+    private ReplaceWorkCenterFromDateRequest toReplaceWorkCenterRequest(
             EmployeeLifecycleEvent event,
             WorkCenterChangeEventPayload payload
     ) {
-        return new CreateWorkCenterRequest(
-                normalizeCode(payload.workCenterCode()),
+        return new ReplaceWorkCenterFromDateRequest(
                 event.effectiveDate(),
-                null
+                normalizeCode(payload.workCenterCode())
         );
     }
 
@@ -327,7 +326,7 @@ public class RunLifecycleSimulationService implements RunLifecycleSimulationUseC
             return EventOutcome.failure("Missing WorkCenterChangeEventPayload for CHANGE_WORK_CENTER");
         }
 
-        CreateWorkCenterRequest request = toCreateWorkCenterRequest(event, payload);
+        ReplaceWorkCenterFromDateRequest request = toReplaceWorkCenterRequest(event, payload);
         EventOutcome outcome = executeWorkCenterChange(employee, request);
         if (outcome.success()) {
             state.setCurrentWorkCenterCode(payload.workCenterCode());
@@ -537,19 +536,19 @@ public class RunLifecycleSimulationService implements RunLifecycleSimulationUseC
         }
     }
 
-    private EventOutcome executeWorkCenterChange(SyntheticEmployee employee, CreateWorkCenterRequest request) {
+    private EventOutcome executeWorkCenterChange(SyntheticEmployee employee, ReplaceWorkCenterFromDateRequest request) {
         if (properties.getRun().isDryRun()) {
             return EventOutcome.success("DRY-RUN payload -> " + summarizeWorkCenterChangePayload(employee, request));
         }
 
         try {
-            b4rrhhLifecycleClient.createWorkCenter(
+            b4rrhhLifecycleClient.replaceWorkCenterFromDate(
                     normalizeCode(employee.ruleSystemCode()),
                     normalizeCode(employee.employeeTypeCode()),
                     employee.employeeNumber(),
                     request
             );
-            return EventOutcome.success("Work center create call completed");
+            return EventOutcome.success("Work center replace-from-date call completed");
         } catch (Exception ex) {
             return EventOutcome.failure(ex.getMessage());
         }
@@ -712,12 +711,14 @@ public class RunLifecycleSimulationService implements RunLifecycleSimulationUseC
                 + ", rehireDate=" + request.rehireDate();
     }
 
-    private static String summarizeWorkCenterChangePayload(SyntheticEmployee employee, CreateWorkCenterRequest request) {
-        return "employeeNumber=" + employee.employeeNumber()
+    private static String summarizeWorkCenterChangePayload(SyntheticEmployee employee, ReplaceWorkCenterFromDateRequest request) {
+        return "operation=replace-from-date"
+                + ", employeeNumber=" + employee.employeeNumber()
                 + ", ruleSystemCode=" + normalizeCode(employee.ruleSystemCode())
                 + ", employeeTypeCode=" + normalizeCode(employee.employeeTypeCode())
+                + ", effectiveDate=" + request.effectiveDate()
                 + ", workCenterCode=" + request.workCenterCode()
-                + ", startDate=" + request.startDate();
+                ;
     }
 
     private static String summarizeContractReplacePayload(SyntheticEmployee employee, ReplaceContractFromDateRequest request) {
