@@ -19,6 +19,22 @@ public class RunReportWriter {
         log.info("Hires: requested={} success={} failed={}", summary.hiresRequested(), summary.hiresSuccess(), summary.hiresFailed());
         log.info("Terminations: requested={} success={} failed={}", summary.terminationsRequested(), summary.terminationsSuccess(), summary.terminationsFailed());
         log.info("Rehires: requested={} success={} failed={}", summary.rehiresRequested(), summary.rehiresSuccess(), summary.rehiresFailed());
+        log.info("Work center changes: requested={} success={} failed={}",
+            summary.workCenterChangesRequested(),
+            summary.workCenterChangesSuccess(),
+            summary.workCenterChangesFailed());
+        log.info("Contract replacements: requested={} success={} failed={}",
+            summary.contractReplacementsRequested(),
+            summary.contractReplacementsSuccess(),
+            summary.contractReplacementsFailed());
+        log.info("Labor classification replacements: requested={} success={} failed={}",
+            summary.laborClassificationReplacementsRequested(),
+            summary.laborClassificationReplacementsSuccess(),
+            summary.laborClassificationReplacementsFailed());
+        log.info("Cost center replacements: requested={} success={} failed={}",
+            summary.costCenterReplacementsRequested(),
+            summary.costCenterReplacementsSuccess(),
+            summary.costCenterReplacementsFailed());
 
         if (dryRun) {
             log.info("Dry-run payload preview:");
@@ -32,7 +48,13 @@ public class RunReportWriter {
             if (summary.results().size() > 5) {
                 log.info("  ... {} additional payloads", summary.results().size() - 5);
             }
-        } else if (summary.hiresFailed() + summary.terminationsFailed() + summary.rehiresFailed() == 0) {
+        } else if (summary.hiresFailed()
+            + summary.terminationsFailed()
+            + summary.rehiresFailed()
+            + summary.workCenterChangesFailed()
+            + summary.contractReplacementsFailed()
+            + summary.laborClassificationReplacementsFailed()
+            + summary.costCenterReplacementsFailed() == 0) {
             log.info("All lifecycle events completed successfully");
         } else {
             log.info("Failed lifecycle events:");

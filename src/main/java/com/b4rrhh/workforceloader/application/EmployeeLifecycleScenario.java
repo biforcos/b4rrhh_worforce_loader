@@ -6,6 +6,9 @@ import java.util.List;
 
 public record EmployeeLifecycleScenario(
         SyntheticEmployee syntheticEmployee,
-        List<EmployeeLifecycleEvent> events
+        List<EmployeeLifecycleEvent> events,
+        ResolvedHireData resolvedHireData,
+        ResolvedHireData rehireResolvedHireData,
+        String exitReasonCode
 ) {
 }

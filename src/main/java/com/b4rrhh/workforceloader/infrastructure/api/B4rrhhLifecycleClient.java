@@ -2,8 +2,12 @@ package com.b4rrhh.workforceloader.infrastructure.api;
 
 import com.b4rrhh.workforceloader.infrastructure.api.dto.HireEmployeeRequest;
 import com.b4rrhh.workforceloader.infrastructure.api.dto.HireEmployeeResponse;
+import com.b4rrhh.workforceloader.infrastructure.api.dto.CreateWorkCenterRequest;
 import com.b4rrhh.workforceloader.infrastructure.api.dto.RehireEmployeeRequest;
 import com.b4rrhh.workforceloader.infrastructure.api.dto.RehireEmployeeResponse;
+import com.b4rrhh.workforceloader.infrastructure.api.dto.ReplaceContractFromDateRequest;
+import com.b4rrhh.workforceloader.infrastructure.api.dto.ReplaceCostCenterDistributionFromDateRequest;
+import com.b4rrhh.workforceloader.infrastructure.api.dto.ReplaceLaborClassificationFromDateRequest;
 import com.b4rrhh.workforceloader.infrastructure.api.dto.TerminateEmployeeRequest;
 import com.b4rrhh.workforceloader.infrastructure.api.dto.TerminateEmployeeResponse;
 import com.b4rrhh.workforceloader.infrastructure.config.LoaderProperties;
@@ -111,4 +115,86 @@ public class B4rrhhLifecycleClient {
             throw new RuntimeException("Connection/runtime error during backend rehire call: " + ex.getMessage(), ex);
         }
     }
+
+            public void createWorkCenter(
+                String ruleSystemCode,
+                String employeeTypeCode,
+                String employeeNumber,
+                CreateWorkCenterRequest request
+            ) {
+            executePostWithoutResponse(
+                "work center create",
+                "/employees/{ruleSystemCode}/{employeeTypeCode}/{employeeNumber}/work-centers",
+                request,
+                ruleSystemCode,
+                employeeTypeCode,
+                employeeNumber
+            );
+            }
+
+            public void replaceContractFromDate(
+                String ruleSystemCode,
+                String employeeTypeCode,
+                String employeeNumber,
+                ReplaceContractFromDateRequest request
+            ) {
+            executePostWithoutResponse(
+                "contract replace-from-date",
+                "/employees/{ruleSystemCode}/{employeeTypeCode}/{employeeNumber}/contracts/replace-from-date",
+                request,
+                ruleSystemCode,
+                employeeTypeCode,
+                employeeNumber
+            );
+            }
+
+            public void replaceLaborClassificationFromDate(
+                String ruleSystemCode,
+                String employeeTypeCode,
+                String employeeNumber,
+                ReplaceLaborClassificationFromDateRequest request
+            ) {
+            executePostWithoutResponse(
+                "labor classification replace-from-date",
+                "/employees/{ruleSystemCode}/{employeeTypeCode}/{employeeNumber}/labor-classifications/replace-from-date",
+                request,
+                ruleSystemCode,
+                employeeTypeCode,
+                employeeNumber
+            );
+            }
+
+            public void replaceCostCenterFromDate(
+                String ruleSystemCode,
+                String employeeTypeCode,
+                String employeeNumber,
+                ReplaceCostCenterDistributionFromDateRequest request
+            ) {
+            executePostWithoutResponse(
+                "cost center replace-from-date",
+                "/employees/{ruleSystemCode}/{employeeTypeCode}/{employeeNumber}/cost-centers/replace-from-date",
+                request,
+                ruleSystemCode,
+                employeeTypeCode,
+                employeeNumber
+            );
+            }
+
+            private void executePostWithoutResponse(String operation, String uri, Object body, Object... uriVariables) {
+            try {
+                webClient.post()
+                    .uri(uri, uriVariables)
+                    .bodyValue(body)
+                    .retrieve()
+                    .toBodilessEntity()
+                    .block();
+            } catch (WebClientResponseException ex) {
+                throw new RuntimeException(
+                    "HTTP error during " + operation + " call: status=" + ex.getStatusCode() + ", body=" + ex.getResponseBodyAsString(),
+                    ex
+                );
+            } catch (Exception ex) {
+                throw new RuntimeException("Connection/runtime error during " + operation + " call: " + ex.getMessage(), ex);
+            }
+            }
 }

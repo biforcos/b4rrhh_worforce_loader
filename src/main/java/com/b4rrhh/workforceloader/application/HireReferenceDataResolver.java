@@ -96,6 +96,28 @@ public class HireReferenceDataResolver {
         return exitReason.code();
     }
 
+    public String resolveWorkCenterCodeFromPools(ResolvedHireReferencePools pools, Random random) {
+        CatalogOption workCenter = pick(pools.workCenters(), random);
+        return workCenter.code();
+    }
+
+    public ResolvedContractData resolveContractFromPools(ResolvedHireReferencePools pools, Random random) {
+        ContractTypeWithSubtypes contractTypeWithSubtypes = pick(pools.contractTypesWithSubtypes(), random);
+        CatalogOption contractType = contractTypeWithSubtypes.contractType();
+        CatalogOption contractSubtype = pick(contractTypeWithSubtypes.subtypes(), random);
+        return new ResolvedContractData(contractType.code(), contractSubtype.code());
+    }
+
+    public ResolvedLaborClassificationData resolveLaborClassificationFromPools(
+            ResolvedHireReferencePools pools,
+            Random random
+    ) {
+        AgreementWithCategories agreementWithCategories = pick(pools.agreementsWithCategories(), random);
+        CatalogOption agreement = agreementWithCategories.agreement();
+        CatalogOption agreementCategory = pick(agreementWithCategories.categories(), random);
+        return new ResolvedLaborClassificationData(agreement.code(), agreementCategory.code());
+    }
+
     public String resolveExitReasonCode(String ruleSystemCode, Random random) {
         String normalizedRuleSystemCode = normalizeCode(ruleSystemCode);
         ResolvedHireReferencePools pools = preloadPools(normalizedRuleSystemCode);

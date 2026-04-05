@@ -13,6 +13,18 @@ public record LoaderRunSummary(
         int rehiresRequested,
         int rehiresSuccess,
         int rehiresFailed,
+        int workCenterChangesRequested,
+        int workCenterChangesSuccess,
+        int workCenterChangesFailed,
+        int contractReplacementsRequested,
+        int contractReplacementsSuccess,
+        int contractReplacementsFailed,
+        int laborClassificationReplacementsRequested,
+        int laborClassificationReplacementsSuccess,
+        int laborClassificationReplacementsFailed,
+        int costCenterReplacementsRequested,
+        int costCenterReplacementsSuccess,
+        int costCenterReplacementsFailed,
         List<LifecycleEventExecutionResult> results
 ) {
 }

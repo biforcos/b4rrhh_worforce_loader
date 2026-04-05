@@ -9,19 +9,19 @@ loader:
 
   run:
     mode: LIFECYCLE
-    dry-run: true
+    dry-run: false
 
   defaults:
     rule-system-code: ESP
     employee-type-code: EMP
 
   generation:
-    count: 10
+    count: 100
     seed: 12345
     employee-number-prefix: MAS
     employee-number-padding: 6
-    hire-date-from: 2024-01-01
-    hire-date-to: 2024-12-31
+    hire-date-from: 2020-01-01
+    hire-date-to: 2025-12-31
 
   simulation:
     terminate-rate: 0.30
@@ -30,6 +30,10 @@ loader:
     termination-max-days-after-hire: 180
     rehire-min-days-after-termination: 15
     rehire-max-days-after-termination: 120
+    work-center-change-rate: 0.35
+    contract-replace-rate: 0.25
+    labor-classification-replace-rate: 0.25
+    cost-center-replace-rate: 0.20
 
   cost-center:
     enabled: false

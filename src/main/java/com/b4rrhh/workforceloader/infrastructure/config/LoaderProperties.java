@@ -303,6 +303,22 @@ public class LoaderProperties {
         @Min(1)
         private int rehireMaxDaysAfterTermination = 120;
 
+        @DecimalMin("0.0")
+        @DecimalMax("1.0")
+        private double workCenterChangeRate = 0.35;
+
+        @DecimalMin("0.0")
+        @DecimalMax("1.0")
+        private double contractReplaceRate = 0.25;
+
+        @DecimalMin("0.0")
+        @DecimalMax("1.0")
+        private double laborClassificationReplaceRate = 0.25;
+
+        @DecimalMin("0.0")
+        @DecimalMax("1.0")
+        private double costCenterReplaceRate = 0.20;
+
         public double getTerminateRate() {
             return terminateRate;
         }
@@ -349,6 +365,38 @@ public class LoaderProperties {
 
         public void setRehireMaxDaysAfterTermination(int rehireMaxDaysAfterTermination) {
             this.rehireMaxDaysAfterTermination = rehireMaxDaysAfterTermination;
+        }
+
+        public double getWorkCenterChangeRate() {
+            return workCenterChangeRate;
+        }
+
+        public void setWorkCenterChangeRate(double workCenterChangeRate) {
+            this.workCenterChangeRate = workCenterChangeRate;
+        }
+
+        public double getContractReplaceRate() {
+            return contractReplaceRate;
+        }
+
+        public void setContractReplaceRate(double contractReplaceRate) {
+            this.contractReplaceRate = contractReplaceRate;
+        }
+
+        public double getLaborClassificationReplaceRate() {
+            return laborClassificationReplaceRate;
+        }
+
+        public void setLaborClassificationReplaceRate(double laborClassificationReplaceRate) {
+            this.laborClassificationReplaceRate = laborClassificationReplaceRate;
+        }
+
+        public double getCostCenterReplaceRate() {
+            return costCenterReplaceRate;
+        }
+
+        public void setCostCenterReplaceRate(double costCenterReplaceRate) {
+            this.costCenterReplaceRate = costCenterReplaceRate;
         }
     }
 }
