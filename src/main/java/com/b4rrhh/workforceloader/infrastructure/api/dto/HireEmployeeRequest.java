@@ -17,6 +17,7 @@ public record HireEmployeeRequest(
         String workCenterCode,
         Contract contract,
         LaborClassification laborClassification,
+        WorkingTime workingTime,
         CostCenterDistribution costCenterDistribution
 ) {
 
@@ -29,6 +30,11 @@ public record HireEmployeeRequest(
     public record LaborClassification(
             String agreementCode,
             String agreementCategoryCode
+    ) {
+    }
+
+    public record WorkingTime(
+            java.math.BigDecimal workingTimePercentage
     ) {
     }
 

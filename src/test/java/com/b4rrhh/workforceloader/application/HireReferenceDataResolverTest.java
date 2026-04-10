@@ -14,6 +14,7 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +36,7 @@ class HireReferenceDataResolverTest {
     void preloadPoolsUsesLegacyBindingReturnedByBackend() throws Exception {
         server = HttpServer.create(new InetSocketAddress(0), 0);
         registerCatalogBindingsContexts(true);
+      registerWorkCentersByCompanyContext();
         registerCatalogOptionsContext(Map.of(
                 "EMPLOYEE_PRESENCE_COMPANY", directOptions("ES02", "Spain Company 02"),
                 "WORK_CENTER", directOptions("MAD", "Madrid HQ"),
@@ -58,6 +60,7 @@ class HireReferenceDataResolverTest {
     @Test
     void preloadPoolsFallsBackToCanonicalCodesWhenBindingsEndpointIsUnavailable() throws Exception {
         server = HttpServer.create(new InetSocketAddress(0), 0);
+      registerWorkCentersByCompanyContext();
         registerCatalogOptionsContext(Map.of(
                 "COMPANY", directOptions("ES02", "Spain Company 02"),
                 "WORK_CENTER", directOptions("MAD", "Madrid HQ"),
@@ -77,6 +80,95 @@ class HireReferenceDataResolverTest {
         assertEquals(List.of(new CatalogOption("ES02", "Spain Company 02")), pools.companies());
         assertEquals(List.of(new CatalogOption("TERMINATION", "Termination")), pools.exitReasons());
     }
+
+    @Test
+    void resolveFromPoolsSkipsCompaniesWithoutWorkCentersForReferenceDate() throws Exception {
+        server = HttpServer.create(new InetSocketAddress(0), 0);
+        registerCatalogBindingsContexts(false);
+        registerWorkCentersByCompanyContext(Map.of(
+                "ES02", """
+                {
+                  "ruleSystemCode": "ESP",
+                  "companyCode": "ES02",
+                  "referenceDate": "2020-01-05",
+                  "items": []
+                }
+                """,
+                "ES01", """
+                {
+                  "ruleSystemCode": "ESP",
+                  "companyCode": "ES01",
+                  "referenceDate": "2020-01-05",
+                  "items": [
+                    {
+                      "code": "MAD",
+                      "name": "Madrid HQ"
+                    }
+                  ]
+                }
+                """
+        ));
+        registerCatalogOptionsContext(Map.of(
+                "COMPANY", """
+                {
+                  "items": [
+                    {
+                      "code": "ES02",
+                      "name": "Spain Company 02",
+                      "active": true
+                    },
+                    {
+                      "code": "ES01",
+                      "name": "Spain Company 01",
+                      "active": true
+                    }
+                  ]
+                }
+                """,
+                "WORK_CENTER", directOptions("REMOTE", "Remote"),
+                "EMPLOYEE_PRESENCE_ENTRY_REASON", directOptions("HIRING", "Hiring"),
+                "EMPLOYEE_PRESENCE_EXIT_REASON", directOptions("TERMINATION", "Termination"),
+                "AGREEMENT", directOptions("AGR01", "General Agreement"),
+                "CONTRACT", directOptions("PERM", "Permanent")
+        ));
+        registerAgreementCategoriesContext();
+        registerContractSubtypesContext();
+        server.start();
+
+        HireReferenceDataResolver resolver = newResolver();
+
+        ResolvedHireReferencePools pools = resolver.preloadPools("ESP");
+        ResolvedHireData resolvedHireData = resolver.resolveFromPools(pools, "ESP", LocalDate.of(2020, 1, 5), new java.util.Random(0));
+
+        assertEquals("ES01", resolvedHireData.companyCode());
+        assertEquals("MAD", resolvedHireData.workCenterCode());
+    }
+
+      @Test
+      void resolveFromPoolsUsesWorkCentersByCompanyAndReferenceDate() throws Exception {
+        server = HttpServer.create(new InetSocketAddress(0), 0);
+        registerCatalogBindingsContexts(false);
+        registerWorkCentersByCompanyContext();
+        registerCatalogOptionsContext(Map.of(
+            "COMPANY", directOptions("ES02", "Spain Company 02"),
+            "WORK_CENTER", directOptions("REMOTE", "Remote"),
+            "EMPLOYEE_PRESENCE_ENTRY_REASON", directOptions("HIRING", "Hiring"),
+            "EMPLOYEE_PRESENCE_EXIT_REASON", directOptions("TERMINATION", "Termination"),
+            "AGREEMENT", directOptions("AGR01", "General Agreement"),
+            "CONTRACT", directOptions("PERM", "Permanent")
+        ));
+        registerAgreementCategoriesContext();
+        registerContractSubtypesContext();
+        server.start();
+
+        HireReferenceDataResolver resolver = newResolver();
+
+        ResolvedHireReferencePools pools = resolver.preloadPools("ESP");
+        ResolvedHireData resolvedHireData = resolver.resolveFromPools(pools, "ESP", LocalDate.of(2020, 1, 5), null);
+
+        assertEquals("ES02", resolvedHireData.companyCode());
+        assertEquals("MAD", resolvedHireData.workCenterCode());
+      }
 
     private HireReferenceDataResolver newResolver() {
         LoaderProperties properties = new LoaderProperties();
@@ -201,6 +293,42 @@ class HireReferenceDataResolverTest {
                   }
                 ]
                 """
+        ));
+    }
+
+    private void registerWorkCentersByCompanyContext() {
+        registerWorkCentersByCompanyContext(Map.of(
+                "ES02", """
+                {
+                  "ruleSystemCode": "ESP",
+                  "companyCode": "ES02",
+                  "referenceDate": "2020-01-05",
+                  "items": [
+                    {
+                      "code": "MAD",
+                      "name": "Madrid HQ"
+                    }
+                  ]
+                }
+                """
+        ));
+    }
+
+    private void registerWorkCentersByCompanyContext(Map<String, String> responsesByCompanyCode) {
+        server.createContext("/catalog-options/work-centers-by-company", exchange -> writeJson(
+                exchange,
+                200,
+                responsesByCompanyCode.getOrDefault(
+                        queryParams(exchange.getRequestURI()).get("companyCode"),
+                        """
+                        {
+                          "ruleSystemCode": "ESP",
+                          "companyCode": "UNKNOWN",
+                          "referenceDate": "2020-01-05",
+                          "items": []
+                        }
+                        """
+                )
         ));
     }
 

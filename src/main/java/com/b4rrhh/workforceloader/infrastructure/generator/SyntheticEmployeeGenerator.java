@@ -29,9 +29,11 @@ public class SyntheticEmployeeGenerator {
     public List<SyntheticEmployee> generateEmployees() {
         LoaderProperties.Defaults defaults = properties.getDefaults();
         LoaderProperties.Generation generation = properties.getGeneration();
+        WorkingTimePercentageResolver workingTimePercentageResolver = new WorkingTimePercentageResolver();
 
         Random random = new Random(generation.getSeed());
         List<SyntheticEmployee> employees = new ArrayList<>(generation.getCount());
+        var workingTimePercentage = workingTimePercentageResolver.resolve(generation);
 
         for (int i = 1; i <= generation.getCount(); i++) {
             String firstName = pick(FIRST_NAMES, random);
@@ -48,7 +50,8 @@ public class SyntheticEmployeeGenerator {
                     lastName1,
                     lastName2,
                     firstName,
-                    hireDate
+                    hireDate,
+                    workingTimePercentage
             ));
         }
 

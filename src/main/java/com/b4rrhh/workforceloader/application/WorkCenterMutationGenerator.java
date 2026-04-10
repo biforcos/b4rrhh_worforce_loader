@@ -1,36 +1,36 @@
 package com.b4rrhh.workforceloader.application;
 
-import com.b4rrhh.workforceloader.infrastructure.api.dto.CatalogOption;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
+import java.time.LocalDate;
+import java.util.Optional;
 import java.util.Random;
 
 @Component
 public class WorkCenterMutationGenerator {
 
-    public WorkCenterChangeEventPayload generate(
-            ResolvedHireReferencePools pools,
-            EmployeeExecutionState state,
-            Random random
-    ) {
-        CatalogOption selected = pickDifferentOrAny(pools.workCenters(), state.getCurrentWorkCenterCode(), random);
-        return new WorkCenterChangeEventPayload(selected.code());
+    private final HireReferenceDataResolver hireReferenceDataResolver;
+
+    public WorkCenterMutationGenerator(HireReferenceDataResolver hireReferenceDataResolver) {
+        this.hireReferenceDataResolver = hireReferenceDataResolver;
     }
 
-    private CatalogOption pickDifferentOrAny(List<CatalogOption> options, String currentCode, Random random) {
-        if (options.size() == 1 || currentCode == null || currentCode.isBlank()) {
-            return RandomSelector.pickRandom(options, random);
+    public Optional<WorkCenterChangeEventPayload> generate(
+            String ruleSystemCode,
+            EmployeeExecutionState state,
+            LocalDate effectiveDate,
+            Random random
+    ) {
+        String workCenterCode = hireReferenceDataResolver.tryResolveWorkCenterCodeForCompany(
+                ruleSystemCode,
+                state.getCurrentCompanyCode(),
+                effectiveDate,
+                state.getCurrentWorkCenterCode(),
+                random
+        );
+        if (workCenterCode == null || workCenterCode.equalsIgnoreCase(state.getCurrentWorkCenterCode())) {
+            return Optional.empty();
         }
-
-        List<CatalogOption> filtered = options.stream()
-                .filter(option -> !option.code().equalsIgnoreCase(currentCode))
-                .toList();
-
-        if (filtered.isEmpty()) {
-            return RandomSelector.pickRandom(options, random);
-        }
-
-        return RandomSelector.pickRandom(filtered, random);
+        return Optional.of(new WorkCenterChangeEventPayload(workCenterCode));
     }
 }

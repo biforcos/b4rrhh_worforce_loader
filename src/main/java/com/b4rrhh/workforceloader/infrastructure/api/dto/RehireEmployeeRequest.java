@@ -10,6 +10,7 @@ public record RehireEmployeeRequest(
         WorkCenter workCenter,
         Contract contract,
         LaborClassification laborClassification,
+        WorkingTime workingTime,
         CostCenterDistribution costCenterDistribution
 ) {
 
@@ -27,6 +28,11 @@ public record RehireEmployeeRequest(
     public record LaborClassification(
             String agreementCode,
             String agreementCategoryCode
+    ) {
+    }
+
+    public record WorkingTime(
+            java.math.BigDecimal workingTimePercentage
     ) {
     }
 

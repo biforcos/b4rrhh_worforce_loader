@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -110,6 +111,30 @@ public class CatalogApiClient {
         return mapDependentOptions(response, "CONTRACT_SUBTYPE");
     }
 
+    public List<CatalogOption> getWorkCentersByCompany(
+            String ruleSystemCode,
+            String companyCode,
+            LocalDate referenceDate
+    ) {
+        WorkCentersByCompanyResponse response = webClient.get()
+                .uri(uriBuilder -> {
+                    var builder = uriBuilder
+                            .path("/catalog-options/work-centers-by-company")
+                            .queryParam("ruleSystemCode", normalize(ruleSystemCode))
+                            .queryParam("companyCode", normalize(companyCode));
+                    if (referenceDate != null) {
+                        builder.queryParam("referenceDate", referenceDate);
+                    }
+                    return builder.build();
+                })
+                .retrieve()
+                .bodyToMono(WorkCentersByCompanyResponse.class)
+                .block();
+
+            List<WorkCenterByCompanyItem> items = response == null ? List.of() : response.items();
+            return mapWorkCentersByCompany(items);
+    }
+
     private List<CatalogOption> mapDirectOptions(List<RawCatalogItem> rawItems, String entityTypeCode) {
         List<CatalogOption> options = (rawItems == null ? List.<RawCatalogItem>of() : rawItems).stream()
                 .filter(option -> option != null
@@ -136,6 +161,21 @@ public class CatalogApiClient {
 
         if (options.isEmpty()) {
             throw new IllegalStateException("No catalog options found for " + entityTypeCode);
+        }
+
+        return options;
+    }
+
+    private List<CatalogOption> mapWorkCentersByCompany(List<WorkCenterByCompanyItem> rawItems) {
+        List<CatalogOption> options = (rawItems == null ? List.<WorkCenterByCompanyItem>of() : rawItems).stream()
+                .filter(option -> option != null
+                        && option.code() != null
+                        && option.name() != null)
+                .map(option -> new CatalogOption(normalize(option.code()), option.name().trim()))
+                .toList();
+
+        if (options.isEmpty()) {
+            throw new IllegalStateException("No catalog options found for WORK_CENTER_BY_COMPANY");
         }
 
         return options;
@@ -201,6 +241,17 @@ public class CatalogApiClient {
 
     private record CatalogBindingsByResourceResponse(List<CatalogFieldBinding> fields) {
     }
+
+        private record WorkCentersByCompanyResponse(
+            String ruleSystemCode,
+            String companyCode,
+            LocalDate referenceDate,
+                List<WorkCenterByCompanyItem> items
+        ) {
+        }
+
+            private record WorkCenterByCompanyItem(String code, String name) {
+            }
 
     private record CatalogFieldBinding(
             String fieldCode,

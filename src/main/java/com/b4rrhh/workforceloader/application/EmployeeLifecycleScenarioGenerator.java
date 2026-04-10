@@ -45,8 +45,9 @@ public class EmployeeLifecycleScenarioGenerator {
 
         List<EmployeeLifecycleScenario> scenarios = new ArrayList<>(employees.size());
         for (SyntheticEmployee employee : employees) {
-            ResolvedHireData resolvedHireData = hireReferenceDataResolver.resolveFromPools(referencePools, random);
-            ResolvedHireData rehireResolvedHireData = planRehireResolvedHireData(resolvedHireData, referencePools, random);
+            ResolvedHireData resolvedHireData = hireReferenceDataResolver
+                .resolveFromPools(referencePools, ruleSystemCode, employee.hireDate(), random)
+                    .withWorkingTimePercentage(employee.workingTimePercentage());
             String exitReasonCode = hireReferenceDataResolver.resolveExitReasonFromPools(referencePools, random);
 
             List<EmployeeLifecycleEvent> events = new ArrayList<>();
@@ -72,12 +73,17 @@ public class EmployeeLifecycleScenarioGenerator {
                 events.add(new EmployeeLifecycleEvent(LifecycleEventType.REHIRE, rehireDate));
             }
 
+            ResolvedHireData rehireResolvedHireData = rehireDate == null
+                    ? resolvedHireData
+                    : planRehireResolvedHireData(resolvedHireData, ruleSystemCode, rehireDate, referencePools, random);
+
             List<ActiveWindow> activeWindows = buildActiveWindows(employee.hireDate(), terminationDate, rehireDate);
             addMutationEvents(events, activeWindows, simulation, random);
 
             events.sort(Comparator.comparing(EmployeeLifecycleEvent::effectiveDate));
                 List<EmployeeLifecycleEvent> plannedEvents = addMutationPayloads(
                     events,
+                    ruleSystemCode,
                     referencePools,
                     resolvedHireData,
                     rehireResolvedHireData,
@@ -98,6 +104,7 @@ public class EmployeeLifecycleScenarioGenerator {
 
     private List<EmployeeLifecycleEvent> addMutationPayloads(
             List<EmployeeLifecycleEvent> sortedEvents,
+            String ruleSystemCode,
             ResolvedHireReferencePools pools,
             ResolvedHireData resolvedHireData,
             ResolvedHireData rehireResolvedHireData,
@@ -125,10 +132,18 @@ public class EmployeeLifecycleScenarioGenerator {
                     if (!state.isActive()) {
                         continue;
                     }
-                    WorkCenterChangeEventPayload payload = workCenterMutationGenerator.generate(pools, state, random);
-                    state.setCurrentWorkCenterCode(payload.workCenterCode());
+                    var payload = workCenterMutationGenerator.generate(
+                            ruleSystemCode,
+                            state,
+                            event.effectiveDate(),
+                            random
+                    );
+                    if (payload.isEmpty()) {
+                        continue;
+                    }
+                    state.setCurrentWorkCenterCode(payload.get().workCenterCode());
                     state.setLastEffectiveDate(event.effectiveDate());
-                    planned.add(new EmployeeLifecycleEvent(event.eventType(), event.effectiveDate(), payload));
+                    planned.add(new EmployeeLifecycleEvent(event.eventType(), event.effectiveDate(), payload.get()));
                 }
                 case REPLACE_CONTRACT -> {
                     if (!state.isActive()) {
@@ -171,6 +186,7 @@ public class EmployeeLifecycleScenarioGenerator {
             LocalDate effectiveDate
     ) {
         state.setActive(true);
+        state.setCurrentCompanyCode(resolvedHireData.companyCode());
         state.setCurrentWorkCenterCode(resolvedHireData.workCenterCode());
         state.setCurrentContractData(new ResolvedContractData(
                 resolvedHireData.contractTypeCode(),
@@ -189,6 +205,7 @@ public class EmployeeLifecycleScenarioGenerator {
             LocalDate effectiveDate
         ) {
         state.setActive(true);
+        state.setCurrentCompanyCode(resolvedHireData.companyCode());
         state.setCurrentWorkCenterCode(resolvedHireData.workCenterCode());
         state.setCurrentContractData(new ResolvedContractData(
             resolvedHireData.contractTypeCode(),
@@ -284,6 +301,8 @@ public class EmployeeLifecycleScenarioGenerator {
 
     private ResolvedHireData planRehireResolvedHireData(
             ResolvedHireData baseResolvedHireData,
+            String ruleSystemCode,
+            LocalDate rehireDate,
             ResolvedHireReferencePools pools,
             Random random
     ) {
@@ -296,15 +315,24 @@ public class EmployeeLifecycleScenarioGenerator {
 
         double variation = random.nextDouble();
         if (variation < 0.60) {
-            WorkCenterChangeEventPayload payload = workCenterMutationGenerator.generate(pools, seedState, random);
+            var payload = workCenterMutationGenerator.generate(
+                    ruleSystemCode,
+                    seedState,
+                    rehireDate,
+                    random
+            );
+            if (payload.isEmpty()) {
+                return baseResolvedHireData;
+            }
             return new ResolvedHireData(
                     baseResolvedHireData.companyCode(),
-                    payload.workCenterCode(),
+                    payload.get().workCenterCode(),
                     baseResolvedHireData.entryReasonCode(),
                     baseResolvedHireData.agreementCode(),
                     baseResolvedHireData.agreementCategoryCode(),
                     baseResolvedHireData.contractTypeCode(),
-                    baseResolvedHireData.contractSubtypeCode()
+                    baseResolvedHireData.contractSubtypeCode(),
+                    baseResolvedHireData.workingTimePercentage()
             );
         }
 
@@ -317,7 +345,8 @@ public class EmployeeLifecycleScenarioGenerator {
                     baseResolvedHireData.agreementCode(),
                     baseResolvedHireData.agreementCategoryCode(),
                     payload.contractCode(),
-                    payload.contractSubtypeCode()
+                    payload.contractSubtypeCode(),
+                    baseResolvedHireData.workingTimePercentage()
             );
         }
 
@@ -329,7 +358,8 @@ public class EmployeeLifecycleScenarioGenerator {
                 payload.agreementCode(),
                 payload.agreementCategoryCode(),
                 baseResolvedHireData.contractTypeCode(),
-                baseResolvedHireData.contractSubtypeCode()
+                baseResolvedHireData.contractSubtypeCode(),
+                baseResolvedHireData.workingTimePercentage()
         );
     }
 

@@ -1,5 +1,6 @@
 package com.b4rrhh.workforceloader.domain.model;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public record SyntheticEmployee(
@@ -10,6 +11,7 @@ public record SyntheticEmployee(
         String lastName1,
         String lastName2,
         String preferredName,
-        LocalDate hireDate
+        LocalDate hireDate,
+        BigDecimal workingTimePercentage
 ) {
 }

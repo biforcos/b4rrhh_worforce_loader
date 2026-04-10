@@ -9,6 +9,7 @@ import jakarta.validation.constraints.NotNull;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -157,6 +158,14 @@ public class LoaderProperties {
         @NotNull
         private LocalDate hireDateTo = LocalDate.now();
 
+        private BigDecimal workingTimePercentage;
+
+        private BigDecimal weeklyHours;
+
+        private BigDecimal monthlyHours;
+
+        private BigDecimal dailyHours;
+
         public int getCount() {
             return count;
         }
@@ -203,6 +212,38 @@ public class LoaderProperties {
 
         public void setHireDateTo(LocalDate hireDateTo) {
             this.hireDateTo = hireDateTo;
+        }
+
+        public BigDecimal getWorkingTimePercentage() {
+            return workingTimePercentage;
+        }
+
+        public void setWorkingTimePercentage(BigDecimal workingTimePercentage) {
+            this.workingTimePercentage = workingTimePercentage;
+        }
+
+        public BigDecimal getWeeklyHours() {
+            return weeklyHours;
+        }
+
+        public void setWeeklyHours(BigDecimal weeklyHours) {
+            this.weeklyHours = weeklyHours;
+        }
+
+        public BigDecimal getMonthlyHours() {
+            return monthlyHours;
+        }
+
+        public void setMonthlyHours(BigDecimal monthlyHours) {
+            this.monthlyHours = monthlyHours;
+        }
+
+        public BigDecimal getDailyHours() {
+            return dailyHours;
+        }
+
+        public void setDailyHours(BigDecimal dailyHours) {
+            this.dailyHours = dailyHours;
         }
     }
 

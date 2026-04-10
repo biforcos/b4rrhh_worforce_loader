@@ -22,6 +22,7 @@ loader:
     employee-number-padding: 6
     hire-date-from: 2020-01-01
     hire-date-to: 2025-12-31
+    working-time-percentage: 100
 
   simulation:
     terminate-rate: 0.30

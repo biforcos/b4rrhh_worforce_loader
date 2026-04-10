@@ -7,6 +7,7 @@ import java.util.List;
 public class EmployeeExecutionState {
 
     private boolean active;
+    private String currentCompanyCode;
     private String currentWorkCenterCode;
     private ResolvedContractData currentContractData;
     private ResolvedLaborClassificationData currentLaborClassificationData;
@@ -27,6 +28,14 @@ public class EmployeeExecutionState {
 
     public String getCurrentWorkCenterCode() {
         return currentWorkCenterCode;
+    }
+
+    public String getCurrentCompanyCode() {
+        return currentCompanyCode;
+    }
+
+    public void setCurrentCompanyCode(String currentCompanyCode) {
+        this.currentCompanyCode = currentCompanyCode;
     }
 
     public void setCurrentWorkCenterCode(String currentWorkCenterCode) {

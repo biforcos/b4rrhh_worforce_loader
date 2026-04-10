@@ -4,6 +4,7 @@ import com.b4rrhh.workforceloader.infrastructure.api.CatalogApiClient;
 import com.b4rrhh.workforceloader.infrastructure.api.dto.CatalogOption;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -47,7 +48,7 @@ public class HireReferenceDataResolver {
         String normalizedRuleSystemCode = normalizeCode(ruleSystemCode);
 
         ResolvedHireReferencePools pools = preloadPools(normalizedRuleSystemCode);
-        return resolveFromPools(pools, random);
+        return resolveFromPools(pools, normalizedRuleSystemCode, null, random);
     }
 
     public ResolvedHireReferencePools preloadPools(String ruleSystemCode) {
@@ -104,8 +105,21 @@ public class HireReferenceDataResolver {
     }
 
     public ResolvedHireData resolveFromPools(ResolvedHireReferencePools pools, Random random) {
-        CatalogOption company = pick(pools.companies(), random);
-        CatalogOption workCenter = pick(pools.workCenters(), random);
+        return resolveFromPools(pools, null, null, random);
+    }
+
+    public ResolvedHireData resolveFromPools(
+            ResolvedHireReferencePools pools,
+            String ruleSystemCode,
+            LocalDate referenceDate,
+            Random random
+    ) {
+        ResolvedCompanyWorkCenter companyAndWorkCenter = resolveCompanyAndWorkCenterFromPools(
+            pools.companies(),
+            ruleSystemCode,
+            referenceDate,
+            random
+        );
         CatalogOption entryReason = pick(pools.entryReasons(), random);
 
         AgreementWithCategories agreementWithCategories = pick(pools.agreementsWithCategories(), random);
@@ -117,13 +131,14 @@ public class HireReferenceDataResolver {
         CatalogOption contractSubtype = pick(contractTypeWithSubtypes.subtypes(), random);
 
         return new ResolvedHireData(
-                company.code(),
-                workCenter.code(),
+            companyAndWorkCenter.companyCode(),
+            companyAndWorkCenter.workCenterCode(),
                 entryReason.code(),
                 agreement.code(),
                 agreementCategory.code(),
                 contractType.code(),
-                contractSubtype.code()
+                contractSubtype.code(),
+                null
         );
     }
 
@@ -133,8 +148,34 @@ public class HireReferenceDataResolver {
     }
 
     public String resolveWorkCenterCodeFromPools(ResolvedHireReferencePools pools, Random random) {
-        CatalogOption workCenter = pick(pools.workCenters(), random);
-        return workCenter.code();
+        CatalogOption company = pick(pools.companies(), random);
+        return resolveWorkCenterCodeForCompany(null, company.code(), null, null, random);
+    }
+
+    public String resolveWorkCenterCodeForCompany(
+            String ruleSystemCode,
+            String companyCode,
+            LocalDate referenceDate,
+            String currentWorkCenterCode,
+            Random random
+    ) {
+        List<CatalogOption> workCenters = catalogApiClient.getWorkCentersByCompany(ruleSystemCode, companyCode, referenceDate);
+        CatalogOption selected = pickDifferentOrAny(workCenters, currentWorkCenterCode, random);
+        return selected.code();
+    }
+
+    public String tryResolveWorkCenterCodeForCompany(
+            String ruleSystemCode,
+            String companyCode,
+            LocalDate referenceDate,
+            String currentWorkCenterCode,
+            Random random
+    ) {
+        try {
+            return resolveWorkCenterCodeForCompany(ruleSystemCode, companyCode, referenceDate, currentWorkCenterCode, random);
+        } catch (IllegalStateException ex) {
+            return null;
+        }
     }
 
     public ResolvedContractData resolveContractFromPools(ResolvedHireReferencePools pools, Random random) {
@@ -187,7 +228,64 @@ public class HireReferenceDataResolver {
         return RandomSelector.pickRandom(values, random);
     }
 
+    private ResolvedCompanyWorkCenter resolveCompanyAndWorkCenterFromPools(
+            List<CatalogOption> companies,
+            String ruleSystemCode,
+            LocalDate referenceDate,
+            Random random
+    ) {
+        if (companies == null || companies.isEmpty()) {
+            throw new IllegalStateException("Cannot resolve company and work center from empty company pool");
+        }
+
+        int startIndex = random == null ? 0 : random.nextInt(companies.size());
+        IllegalStateException lastError = null;
+
+        for (int offset = 0; offset < companies.size(); offset++) {
+            CatalogOption company = companies.get((startIndex + offset) % companies.size());
+            try {
+                String workCenterCode = resolveWorkCenterCodeForCompany(
+                        ruleSystemCode,
+                        company.code(),
+                        referenceDate,
+                        null,
+                        random
+                );
+                return new ResolvedCompanyWorkCenter(company.code(), workCenterCode);
+            } catch (IllegalStateException ex) {
+                lastError = ex;
+            }
+        }
+
+        throw new IllegalStateException(
+                "No work centers available for any company in ruleSystemCode="
+                        + normalizeCode(ruleSystemCode)
+                        + ", referenceDate="
+                        + referenceDate,
+                lastError
+        );
+    }
+
+    private static CatalogOption pickDifferentOrAny(List<CatalogOption> options, String currentCode, Random random) {
+        if (options.size() == 1 || currentCode == null || currentCode.isBlank()) {
+            return pick(options, random);
+        }
+
+        List<CatalogOption> filtered = options.stream()
+                .filter(option -> !option.code().equalsIgnoreCase(currentCode))
+                .toList();
+
+        if (filtered.isEmpty()) {
+            return pick(options, random);
+        }
+
+        return pick(filtered, random);
+    }
+
     private static String normalizeCode(String value) {
         return value == null ? null : value.trim().toUpperCase();
+    }
+
+    private record ResolvedCompanyWorkCenter(String companyCode, String workCenterCode) {
     }
 }

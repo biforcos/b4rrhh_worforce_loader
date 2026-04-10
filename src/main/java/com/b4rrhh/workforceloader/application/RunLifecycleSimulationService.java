@@ -18,6 +18,7 @@ import com.b4rrhh.workforceloader.infrastructure.config.LoaderProperties;
 import com.b4rrhh.workforceloader.infrastructure.generator.SyntheticEmployeeGenerator;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -101,13 +102,19 @@ public class RunLifecycleSimulationService implements RunLifecycleSimulationUseC
                 switch (event.eventType()) {
                     case HIRE -> {
                         hiresRequested++;
-                        HireEmployeeRequest request = toHireRequest(employee, event, employeeResolvedHireData);
-                        outcome = executeHire(request);
-                        if (outcome.success()) {
-                            hiresSuccess++;
-                            applyInitialHireState(executionState, employeeResolvedHireData, event.effectiveDate(), request.costCenterDistribution());
-                        } else {
+                        try {
+                            HireEmployeeRequest request = toHireRequest(employee, event, employeeResolvedHireData);
+                            outcome = executeHire(request);
+                            if (outcome.success()) {
+                                hiresSuccess++;
+                                applyInitialHireState(executionState, employeeResolvedHireData, event.effectiveDate(), request.costCenterDistribution());
+                            } else {
+                                hiresFailed++;
+                                scenarioCanContinue = false;
+                            }
+                        } catch (IllegalArgumentException ex) {
                             hiresFailed++;
+                            outcome = EventOutcome.failure(ex.getMessage());
                             scenarioCanContinue = false;
                         }
                     }
@@ -125,13 +132,19 @@ public class RunLifecycleSimulationService implements RunLifecycleSimulationUseC
                     }
                     case REHIRE -> {
                         rehiresRequested++;
-                        RehireEmployeeRequest request = toRehireRequest(employee, event, employeeRehireResolvedHireData);
-                        outcome = executeRehire(employee, request);
-                        if (outcome.success()) {
-                            rehiresSuccess++;
-                            applyRehireState(executionState, employeeRehireResolvedHireData, event.effectiveDate(), request.costCenterDistribution());
-                        } else {
+                        try {
+                            RehireEmployeeRequest request = toRehireRequest(employee, event, employeeRehireResolvedHireData);
+                            outcome = executeRehire(employee, request);
+                            if (outcome.success()) {
+                                rehiresSuccess++;
+                                applyRehireState(executionState, employeeRehireResolvedHireData, event.effectiveDate(), request.costCenterDistribution());
+                            } else {
+                                rehiresFailed++;
+                                scenarioCanContinue = false;
+                            }
+                        } catch (IllegalArgumentException ex) {
                             rehiresFailed++;
+                            outcome = EventOutcome.failure(ex.getMessage());
                             scenarioCanContinue = false;
                         }
                     }
@@ -239,6 +252,7 @@ public class RunLifecycleSimulationService implements RunLifecycleSimulationUseC
                         normalizeCode(resolvedHireData.agreementCode()),
                         normalizeCode(resolvedHireData.agreementCategoryCode())
                 ),
+                buildHireWorkingTime(employee, resolvedHireData),
                 buildHireCostCenterDistribution(employee)
         );
     }
@@ -268,9 +282,50 @@ public class RunLifecycleSimulationService implements RunLifecycleSimulationUseC
                         normalizeCode(resolvedHireData.agreementCode()),
                         normalizeCode(resolvedHireData.agreementCategoryCode())
                 ),
+                buildRehireWorkingTime(employee, resolvedHireData),
                 buildRehireCostCenterDistribution(employee)
         );
     }
+
+            private HireEmployeeRequest.WorkingTime buildHireWorkingTime(
+                SyntheticEmployee employee,
+                ResolvedHireData resolvedHireData
+            ) {
+            return new HireEmployeeRequest.WorkingTime(
+                requireWorkingTimePercentage(resolvedHireData, employee, LifecycleEventType.HIRE)
+            );
+            }
+
+            private RehireEmployeeRequest.WorkingTime buildRehireWorkingTime(
+                SyntheticEmployee employee,
+                ResolvedHireData resolvedHireData
+            ) {
+            return new RehireEmployeeRequest.WorkingTime(
+                requireWorkingTimePercentage(resolvedHireData, employee, LifecycleEventType.REHIRE)
+            );
+            }
+
+            private BigDecimal requireWorkingTimePercentage(
+                ResolvedHireData resolvedHireData,
+                SyntheticEmployee employee,
+                LifecycleEventType eventType
+            ) {
+            BigDecimal workingTimePercentage = resolvedHireData.workingTimePercentage();
+            if (workingTimePercentage == null) {
+                throw new IllegalArgumentException(
+                    "Missing workingTimePercentage for " + eventType + " event of employee " + employee.employeeNumber()
+                );
+            }
+            if (workingTimePercentage.compareTo(BigDecimal.ZERO) <= 0 || workingTimePercentage.compareTo(new BigDecimal("100")) > 0) {
+                throw new IllegalArgumentException(
+                    "Invalid workingTimePercentage " + workingTimePercentage
+                        + " for " + eventType
+                        + " event of employee " + employee.employeeNumber()
+                        + ". Expected value greater than 0 and less than or equal to 100."
+                );
+            }
+            return workingTimePercentage.stripTrailingZeros();
+            }
 
     private ReplaceWorkCenterFromDateRequest toReplaceWorkCenterRequest(
             EmployeeLifecycleEvent event,
