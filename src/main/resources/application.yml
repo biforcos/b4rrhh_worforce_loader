@@ -5,6 +5,7 @@ spring:
 loader:
   backend:
     base-url: http://localhost:8080
+    auth-token: ${B4RRHH_BACKEND_AUTH_TOKEN:}
     hire-path: /employees/hire
 
   run:
@@ -13,7 +14,7 @@ loader:
 
   defaults:
     rule-system-code: ESP
-    employee-type-code: EMP
+    employee-type-code: INTERNAL
 
   generation:
     count: 100
@@ -21,7 +22,7 @@ loader:
     employee-number-prefix: MAS
     employee-number-padding: 6
     hire-date-from: 2020-01-01
-    hire-date-to: 2025-12-31
+    hire-date-to: 2026-04-01
     working-time-percentage: 100
 
   simulation:

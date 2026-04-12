@@ -95,6 +95,8 @@ public class LoaderProperties {
         @NotBlank
         private String baseUrl;
 
+        private String authToken;
+
         @NotBlank
         private String hirePath = "/employees/hire";
 
@@ -104,6 +106,14 @@ public class LoaderProperties {
 
         public void setBaseUrl(String baseUrl) {
             this.baseUrl = baseUrl;
+        }
+
+        public String getAuthToken() {
+            return authToken;
+        }
+
+        public void setAuthToken(String authToken) {
+            this.authToken = authToken;
         }
 
         public String getHirePath() {

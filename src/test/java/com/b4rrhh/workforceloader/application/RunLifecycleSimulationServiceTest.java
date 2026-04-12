@@ -158,7 +158,7 @@ class RunLifecycleSimulationServiceTest {
         LoaderProperties properties = new LoaderProperties();
         properties.getBackend().setBaseUrl("http://localhost:8080");
         properties.getDefaults().setRuleSystemCode("ESP");
-        properties.getDefaults().setEmployeeTypeCode("EMP");
+        properties.getDefaults().setEmployeeTypeCode("INTERNAL");
         properties.getGeneration().setCount(1);
         properties.getGeneration().setHireDateFrom(LocalDate.of(2024, 1, 1));
         properties.getGeneration().setHireDateTo(LocalDate.of(2024, 12, 31));

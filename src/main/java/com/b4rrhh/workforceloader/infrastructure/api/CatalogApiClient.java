@@ -3,6 +3,7 @@ package com.b4rrhh.workforceloader.infrastructure.api;
 import com.b4rrhh.workforceloader.infrastructure.api.dto.CatalogOption;
 import com.b4rrhh.workforceloader.infrastructure.config.LoaderProperties;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -22,9 +23,26 @@ public class CatalogApiClient {
     private final Map<String, Map<String, CatalogFieldBinding>> bindingsCache = new ConcurrentHashMap<>();
 
     public CatalogApiClient(LoaderProperties properties, WebClient.Builder webClientBuilder) {
-        this.webClient = webClientBuilder
-                .baseUrl(properties.getBackend().getBaseUrl())
-                .build();
+        WebClient.Builder builder = webClientBuilder
+                .baseUrl(properties.getBackend().getBaseUrl());
+
+        String token = normalizeToken(properties.getBackend().getAuthToken());
+        if (token != null) {
+            builder.defaultHeader(HttpHeaders.AUTHORIZATION, token);
+        }
+
+        this.webClient = builder.build();
+    }
+
+    private static String normalizeToken(String rawToken) {
+        if (rawToken == null || rawToken.trim().isEmpty()) {
+            return null;
+        }
+        String trimmed = rawToken.trim();
+        if (trimmed.regionMatches(true, 0, "Bearer ", 0, 7)) {
+            return trimmed;
+        }
+        return "Bearer " + trimmed;
     }
 
     public List<CatalogOption> getDirectOptions(String ruleSystemCode, String entityTypeCode) {
