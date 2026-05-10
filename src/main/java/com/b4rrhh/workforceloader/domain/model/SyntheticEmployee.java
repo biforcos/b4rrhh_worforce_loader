@@ -14,4 +14,11 @@ public record SyntheticEmployee(
         LocalDate hireDate,
         BigDecimal workingTimePercentage
 ) {
+    public SyntheticEmployee withEmployeeNumber(String number) {
+        return new SyntheticEmployee(
+                ruleSystemCode, employeeTypeCode, number,
+                firstName, lastName1, lastName2, preferredName,
+                hireDate, workingTimePercentage
+        );
+    }
 }

@@ -211,7 +211,7 @@ class RunLifecycleSimulationServiceTest {
         @Override
         public HireEmployeeResponse hire(HireEmployeeRequest request) {
             hireRequests.add(request);
-            return new HireEmployeeResponse("OK", "hire");
+            return new HireEmployeeResponse("OK", "hire", "MAS000001");
         }
 
         @Override

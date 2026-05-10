@@ -104,9 +104,13 @@ public class RunLifecycleSimulationService implements RunLifecycleSimulationUseC
                         hiresRequested++;
                         try {
                             HireEmployeeRequest request = toHireRequest(employee, event, employeeResolvedHireData);
-                            outcome = executeHire(request);
+                            HireResult hireResult = executeHire(request);
+                            outcome = hireResult.outcome();
                             if (outcome.success()) {
                                 hiresSuccess++;
+                                if (hireResult.employeeNumber() != null) {
+                                    employee = employee.withEmployeeNumber(hireResult.employeeNumber());
+                                }
                                 applyInitialHireState(executionState, employeeResolvedHireData, event.effectiveDate(), request.costCenterDistribution());
                             } else {
                                 hiresFailed++;
@@ -235,7 +239,6 @@ public class RunLifecycleSimulationService implements RunLifecycleSimulationUseC
         return new HireEmployeeRequest(
                 normalizeCode(employee.ruleSystemCode()),
                 normalizeCode(employee.employeeTypeCode()),
-                employee.employeeNumber(),
                 employee.firstName(),
                 employee.lastName1(),
                 employee.lastName2(),
@@ -542,18 +545,23 @@ public class RunLifecycleSimulationService implements RunLifecycleSimulationUseC
                 .toList();
     }
 
-    private EventOutcome executeHire(HireEmployeeRequest request) {
+    private HireResult executeHire(HireEmployeeRequest request) {
         if (properties.getRun().isDryRun()) {
-            return EventOutcome.success("DRY-RUN payload -> " + summarizeHirePayload(request));
+            return new HireResult(EventOutcome.success("DRY-RUN payload -> " + summarizeHirePayload(request)), null);
         }
 
         try {
             HireEmployeeResponse response = b4rrhhLifecycleClient.hire(request);
-            return EventOutcome.success(summarizeApiResponse("Hire", response.status(), response.message()));
+            return new HireResult(
+                    EventOutcome.success(summarizeApiResponse("Hire", response.status(), response.message())),
+                    response.employeeNumber()
+            );
         } catch (Exception ex) {
-            return EventOutcome.failure(ex.getMessage());
+            return new HireResult(EventOutcome.failure(ex.getMessage()), null);
         }
     }
+
+    private record HireResult(EventOutcome outcome, String employeeNumber) {}
 
     private EventOutcome executeTerminate(SyntheticEmployee employee, TerminateEmployeeRequest request) {
         if (properties.getRun().isDryRun()) {
@@ -745,8 +753,7 @@ public class RunLifecycleSimulationService implements RunLifecycleSimulationUseC
     }
 
     private static String summarizeHirePayload(HireEmployeeRequest request) {
-        return "employeeNumber=" + request.employeeNumber()
-                + ", ruleSystemCode=" + request.ruleSystemCode()
+        return "ruleSystemCode=" + request.ruleSystemCode()
                 + ", employeeTypeCode=" + request.employeeTypeCode()
                 + ", hireDate=" + request.hireDate();
     }
