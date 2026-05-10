@@ -42,6 +42,10 @@ public class LoaderProperties {
     @NotNull
     private Simulation simulation = new Simulation();
 
+    @Valid
+    @NotNull
+    private Filters filters = new Filters();
+
     public Backend getBackend() {
         return backend;
     }
@@ -88,6 +92,14 @@ public class LoaderProperties {
 
     public void setSimulation(Simulation simulation) {
         this.simulation = simulation;
+    }
+
+    public Filters getFilters() {
+        return filters;
+    }
+
+    public void setFilters(Filters filters) {
+        this.filters = filters;
     }
 
     public static class Backend {
@@ -329,6 +341,49 @@ public class LoaderProperties {
             public void setAllocationPercentage(Integer allocationPercentage) {
                 this.allocationPercentage = allocationPercentage;
             }
+        }
+    }
+
+    public static class Filters {
+
+        private String agreementCode;
+
+        private List<String> agreementCategoryCodes = new ArrayList<>();
+
+        private boolean numericContractTypesOnly = false;
+
+        private boolean requireContractSubtype = true;
+
+        public String getAgreementCode() {
+            return agreementCode;
+        }
+
+        public void setAgreementCode(String agreementCode) {
+            this.agreementCode = agreementCode;
+        }
+
+        public List<String> getAgreementCategoryCodes() {
+            return agreementCategoryCodes;
+        }
+
+        public void setAgreementCategoryCodes(List<String> agreementCategoryCodes) {
+            this.agreementCategoryCodes = agreementCategoryCodes;
+        }
+
+        public boolean isNumericContractTypesOnly() {
+            return numericContractTypesOnly;
+        }
+
+        public void setNumericContractTypesOnly(boolean numericContractTypesOnly) {
+            this.numericContractTypesOnly = numericContractTypesOnly;
+        }
+
+        public boolean isRequireContractSubtype() {
+            return requireContractSubtype;
+        }
+
+        public void setRequireContractSubtype(boolean requireContractSubtype) {
+            this.requireContractSubtype = requireContractSubtype;
         }
     }
 

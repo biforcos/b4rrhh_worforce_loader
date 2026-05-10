@@ -174,7 +174,7 @@ class HireReferenceDataResolverTest {
         LoaderProperties properties = new LoaderProperties();
         properties.getBackend().setBaseUrl("http://localhost:" + server.getAddress().getPort());
         CatalogApiClient catalogApiClient = new CatalogApiClient(properties, WebClient.builder());
-        return new HireReferenceDataResolver(catalogApiClient);
+        return new HireReferenceDataResolver(catalogApiClient, properties);
     }
 
     private void registerCatalogBindingsContexts(boolean legacyCompanyBinding) {

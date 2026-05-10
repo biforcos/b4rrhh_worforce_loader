@@ -5,7 +5,7 @@ spring:
 loader:
   backend:
     base-url: http://localhost:8080
-    auth-token: ${B4RRHH_BACKEND_AUTH_TOKEN:}
+    auth-token: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJiaWZvciIsImV4cCI6MTc3ODM2MDk0MCwiaWF0IjoxNzc4MzU3MzQwLCJyb2xlcyI6WyJBRE1JTiIsIkhSX01BTkFHRVIiLCJIUl9WSUVXRVIiXX0.7F2UgQFzFxNa3e2wjg3W9DFcN5aLTp9U2ww6PPMxF_w
     hire-path: /employees/hire
 
   run:
@@ -17,18 +17,18 @@ loader:
     employee-type-code: INTERNAL
 
   generation:
-    count: 100
+    count: 10000
     seed: 12345
-    employee-number-prefix: MAS
+    employee-number-prefix: EMP
     employee-number-padding: 6
     hire-date-from: 2020-01-01
-    hire-date-to: 2026-04-01
+    hire-date-to: 2026-05-01
     working-time-percentage: 100
 
   simulation:
-    terminate-rate: 0.30
-    rehire-rate-of-terminated: 0.40
-    termination-min-days-after-hire: 30
+    terminate-rate: 0.60
+    rehire-rate-of-terminated: 0.80
+    termination-min-days-after-hire: 6
     termination-max-days-after-hire: 180
     rehire-min-days-after-termination: 15
     rehire-max-days-after-termination: 120
@@ -40,3 +40,12 @@ loader:
   cost-center:
     enabled: false
     items: []
+
+  filters:
+    agreement-code: 99002405011982
+    agreement-category-codes:
+      - 99002405-G1
+      - 99002405-G2
+      - 99002405-G3
+    numeric-contract-types-only: true
+    require-contract-subtype: true

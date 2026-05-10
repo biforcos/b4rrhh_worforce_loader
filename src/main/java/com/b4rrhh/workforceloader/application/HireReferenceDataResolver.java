@@ -2,6 +2,7 @@ package com.b4rrhh.workforceloader.application;
 
 import com.b4rrhh.workforceloader.infrastructure.api.CatalogApiClient;
 import com.b4rrhh.workforceloader.infrastructure.api.dto.CatalogOption;
+import com.b4rrhh.workforceloader.infrastructure.config.LoaderProperties;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -35,9 +36,11 @@ public class HireReferenceDataResolver {
     private static final String CONTRACT = "CONTRACT";
 
     private final CatalogApiClient catalogApiClient;
+    private final LoaderProperties.Filters filters;
 
-    public HireReferenceDataResolver(CatalogApiClient catalogApiClient) {
+    public HireReferenceDataResolver(CatalogApiClient catalogApiClient, LoaderProperties properties) {
         this.catalogApiClient = catalogApiClient;
+        this.filters = properties.getFilters();
     }
 
     public ResolvedHireData resolve(String ruleSystemCode) {
@@ -99,9 +102,51 @@ public class HireReferenceDataResolver {
                 workCenters,
                 entryReasons,
                 exitReasons,
-                agreementsWithCategories,
-                contractTypesWithSubtypes
+                applyAgreementFilter(agreementsWithCategories),
+                applyContractFilter(contractTypesWithSubtypes)
         );
+    }
+
+    private List<AgreementWithCategories> applyAgreementFilter(List<AgreementWithCategories> source) {
+        String code = filters.getAgreementCode();
+        if (code == null || code.isBlank()) {
+            return source;
+        }
+        String normalizedCode = code.trim().toUpperCase();
+        List<String> categoryFilter = filters.getAgreementCategoryCodes().stream()
+                .map(c -> c.trim().toUpperCase())
+                .toList();
+
+        return source.stream()
+                .filter(a -> a.agreement().code().equalsIgnoreCase(normalizedCode))
+                .map(a -> categoryFilter.isEmpty() ? a :
+                        new AgreementWithCategories(
+                                a.agreement(),
+                                a.categories().stream()
+                                        .filter(c -> categoryFilter.contains(c.code().toUpperCase()))
+                                        .toList()
+                        )
+                )
+                .filter(a -> !a.categories().isEmpty())
+                .toList();
+    }
+
+    private List<ContractTypeWithSubtypes> applyContractFilter(List<ContractTypeWithSubtypes> source) {
+        List<ContractTypeWithSubtypes> result = source;
+
+        if (filters.isNumericContractTypesOnly()) {
+            result = result.stream()
+                    .filter(c -> c.contractType().code().matches("[0-9]+"))
+                    .toList();
+        }
+
+        if (filters.isRequireContractSubtype()) {
+            result = result.stream()
+                    .filter(c -> !c.subtypes().isEmpty())
+                    .toList();
+        }
+
+        return result;
     }
 
     public ResolvedHireData resolveFromPools(ResolvedHireReferencePools pools, Random random) {
